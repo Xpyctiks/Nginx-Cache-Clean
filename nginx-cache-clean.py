@@ -430,4 +430,3 @@ if __name__ == "__main__":
             else:
                 print("Error! Enter name of cache entry to delete")
         quit(0)
-    application.run(debug=True, host="172.31.255.2", port="80")
