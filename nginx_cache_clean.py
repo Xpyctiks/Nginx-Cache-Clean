@@ -42,12 +42,12 @@ class CachePath(db.Model):
     cachePath = db.Column(db.String(512), nullable=False, unique=True)
     created = db.Column(db.DateTime,default=datetime.now)
 
-def generate_default_config():   
+def generate_default_config():
     if not os.path.exists(DB_FILE):
         length = 64
         characters = string.ascii_letters + string.digits
         cookie_salt = ''.join(random.choice(characters) for _ in range(length))
-        default_settings = Settings(id=1, telegramChat="", telegramToken="", logFile="/tmp/nginx-cache-log.txt", cryptKey=cookie_salt,cacheFolderBeginWith="/tmp")
+        default_settings = Settings(id=1, telegramChat="", telegramToken="", logFile="/var/log/nginx-cache-clean.log", cryptKey=cookie_salt,cacheFolderBeginWith="/tmp")
         try:
             os.mkdir(CONFIG_DIR)
             db.create_all()
@@ -91,7 +91,7 @@ def set_logpath(logpath):
         logging.info(f"logPath updated to \"{updated.logFile}\"")
     except Exception as err:
         pass
-        
+
 def register_user(username,password,realname):
     try:
         if User.query.filter_by(username=username).first():
@@ -439,3 +439,7 @@ if __name__ == "__main__":
 Info: full script should be launched via UWSGI server. In CLI mode use can only use commands above.
 """)
     quit(0)
+else:
+    application.app_context().push()
+    generate_default_config()
+    load_config()
