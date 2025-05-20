@@ -1,0 +1,20 @@
+{
+   "listeners": {
+     "127.0.0.1:8880": {
+       "pass": "applications/nginx-cache-clean"
+     }
+   },
+  "applications": {
+    "cloud-cache-clean": {
+      "type": "python 3.11",
+      "processes": 4,
+      "user": "www-data",
+      "group": "www-data",
+      "working_directory": "/opt/Nginx-Cache-Cleaner",
+      "home": "/opt/Nginx-Cache-Cleaner",
+      "path": "/opt/Nginx-Cache-Cleaner",
+      "module": "nginx-cache-clean",
+      "callable": "application"
+    }
+  }
+}

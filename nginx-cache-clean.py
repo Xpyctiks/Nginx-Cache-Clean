@@ -371,34 +371,22 @@ if __name__ == "__main__":
     application.app_context().push()
     generate_default_config()
     load_config()
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "--help" or sys.argv[1] == "-h" or sys.argv[1] == "help":
-            print(f"""Usage: \n{sys.argv[0]} set chat <chatID>
-\tAdd Telegram ChatID for notifications.
-{sys.argv[0]} set token <Token>
-\tAdd Telegram Token for notifications.
-{sys.argv[0]} set logpath <new log file path>
-\tAdd Telegram Token for notifications.
-{sys.argv[0]} user add <login> <password> <realname>
-\tAdd new user with its password and default permissions for all cache pathes.
-{sys.argv[0]} user setpwd <user> <new password>
-\tSet new password for existing user.
-{sys.argv[0]} user del <user>
-\tDelete existing user by its login
-{sys.argv[0]} cache add <name> <path>
-\tAdd new cache path
-{sys.argv[0]} cache import <path to file>
-\tImport cache records from file
-{sys.argv[0]} cache del <name>
-\tDelete cache entry
-""")
-            quit()
-        elif sys.argv[1] == "set" and sys.argv[2] == "chat":
-            set_telegramChat(sys.argv[3].strip())
+    if len(sys.argv) > 2:
+        if sys.argv[1] == "set" and sys.argv[2] == "chat":
+            if (len(sys.argv) == 4):
+                set_telegramChat(sys.argv[3].strip())
+            else:
+                print("Error! Enter ChatID")
         elif sys.argv[1] == "set" and sys.argv[2] == "token":
-            set_telegramToken(sys.argv[3].strip())
+            if (len(sys.argv) == 4):
+                set_telegramToken(sys.argv[3].strip())
+            else:
+                print("Error! Enter Token")
         elif sys.argv[1] == "set" and sys.argv[2] == "log":
-            set_logpath(sys.argv[3].strip())
+            if (len(sys.argv) == 4):
+                set_logpath(sys.argv[3].strip())
+            else:
+                print("Error! Enter log path")
         elif sys.argv[1] == "user" and sys.argv[2] == "add":
             if (len(sys.argv) == 6):
                 register_user(sys.argv[3].strip(),sys.argv[4].strip(),sys.argv[5].strip())
@@ -429,4 +417,25 @@ if __name__ == "__main__":
                 del_cache(sys.argv[3].strip())
             else:
                 print("Error! Enter name of cache entry to delete")
-        quit(0)
+    elif len(sys.argv) <= 2:
+        print(f"""Usage: \n{sys.argv[0]} set chat <chatID>
+\tAdd Telegram ChatID for notifications.
+{sys.argv[0]} set token <Token>
+\tAdd Telegram Token for notifications.
+{sys.argv[0]} set logpath <new log file path>
+\tAdd Telegram Token for notifications.
+{sys.argv[0]} user add <login> <password> <realname>
+\tAdd new user with its password and default permissions for all cache pathes.
+{sys.argv[0]} user setpwd <user> <new password>
+\tSet new password for existing user.
+{sys.argv[0]} user del <user>
+\tDelete existing user by its login
+{sys.argv[0]} cache add <name> <path>
+\tAdd new cache path
+{sys.argv[0]} cache import <path to file>
+\tImport cache records from file
+{sys.argv[0]} cache del <name>
+\tDelete cache entry\n
+Info: full script should be launched via UWSGI server. In CLI mode use can only use commands above.
+""")
+    quit(0)
