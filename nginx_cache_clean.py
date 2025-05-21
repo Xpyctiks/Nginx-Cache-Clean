@@ -43,13 +43,14 @@ class CachePath(db.Model):
     created = db.Column(db.DateTime,default=datetime.now)
 
 def generate_default_config():
-    if not os.path.exists(DB_FILE):
+    if not os.path.isfile(DB_FILE):
         length = 64
         characters = string.ascii_letters + string.digits
         cookie_salt = ''.join(random.choice(characters) for _ in range(length))
         default_settings = Settings(id=1, telegramChat="", telegramToken="", logFile="/var/log/nginx-cache-clean.log", cryptKey=cookie_salt,cacheFolderBeginWith="/tmp")
         try:
-            os.mkdir(CONFIG_DIR)
+            if not os.path.exists(CONFIG_DIR):
+                os.mkdir(CONFIG_DIR)
             db.create_all()
             db.session.add(default_settings)
             db.session.commit()
@@ -255,55 +256,52 @@ def logout():
 @application.route("/purge", methods=['POST'])
 @login_required
 def purge():
-    if request.method == 'POST':
-        if request.form['purge']:
-            record = CachePath.query.filter_by(cacheName=request.form['purge']).first()
-            if record:
-                path = record.cachePath
-                name = record.cacheName
-            try:
-                #check if name and zone path from POST equals to their real data from DB, and PATH starts with CACHE_FOLDER_BEGIN_WITH value, to prevent of deleting inside root or any other wrong folder.
-                if (request.form['purge'] == name) and ((request.form['zone'] == path)) and (path.startswith(CACHE_FOLDER_BEGIN_WITH)):
-                    if not os.path.isdir(path):
-                        logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - is not a directory!")
-                        flash(f"Purge error: Zone: {name} - {path} is not a directory!", "alert alert-danger")
+    if request.form['purge']:
+        record = CachePath.query.filter_by(cacheName=request.form['purge']).first()
+        if record:
+            path = record.cachePath
+            name = record.cacheName
+        try:
+            #check if name and zone path from POST equals to their real data from DB, and PATH starts with CACHE_FOLDER_BEGIN_WITH value, to prevent of deleting inside root or any other wrong folder.
+            if (request.form['purge'] == name) and ((request.form['zone'] == path)) and (path.startswith(CACHE_FOLDER_BEGIN_WITH)):
+                if not os.path.isdir(path):
+                    logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - is not a directory!")
+                    flash(f"Purge error: Zone: {name} - {path} is not a directory!", "alert alert-danger")
+                    return redirect(url_for("index"),301)
+                directory_path = os.path.abspath(path)
+                if directory_path in ('/', '/home', '/root', '/etc', '/var', '/tmp', os.path.expanduser("~")):
+                    logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - too dangerous directory is selected!")
+                    flash(f"Purge error: Zone: {name} - {path} too dangerous directory is selected!", "alert alert-danger")
+                    return redirect(url_for("index"),301)
+                for filename in os.listdir(path):
+                    file_path = os.path.join(path, filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as msg:
+                        logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - can't delete {file_path}: {msg}!")
+                        flash(f"Purge error: Zone: {name} - {path} - some files or folders were not deleted!", "alert alert-warning")
                         return redirect(url_for("index"),301)
-                    directory_path = os.path.abspath(path)
-                    if directory_path in ('/', '/home', '/root', '/etc', '/var', '/tmp', os.path.expanduser("~")):
-                        logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - too dangerous directory is selected!")
-                        flash(f"Purge error: Zone: {name} - {path} too dangerous directory is selected!", "alert alert-danger")
-                        return redirect(url_for("index"),301)
-                    for filename in os.listdir(path):
-                        file_path = os.path.join(path, filename)
-                        try:
-                            if os.path.isfile(file_path) or os.path.islink(file_path):
-                                os.unlink(file_path)
-                            elif os.path.isdir(file_path):
-                                shutil.rmtree(file_path)
-                        except Exception as msg:
-                            logging.error(f"Purge error: user {current_user.realname}, zone: {name} - {path} - can't delete {file_path}: {msg}!")
-                            flash(f"Purge error: Zone: {name} - {path} - some files or folders were not deleted!", "alert alert-warning")
-                            return redirect(url_for("index"),301)
-                    asyncio.run(send_to_telegram("🍀Nginx-Cache-Clean:",f"Nginx local cache for {name} purged successfully by {current_user.realname}!"))
-                    logging.info(f"Nginx cache for {name} - {path} purged successfully by {current_user.realname}!")
-                    flash(f"{name} purged successfully!", "alert alert-success")
-                    return redirect("/",301)
-                else:
-                    logging.error(f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!")
-                    asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!"))
-                    flash(f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!", "alert alert-danger")
-                    return redirect("/",301)
-            except Exception as msg:
-                logging.error(f"Error: Some errors during purging - {name} - {path} - {msg}!")
-                asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: Some errors during- {name} - {path} - {msg}"))
-                flash(f"Purge error: Zone: {name} - {path} - some error while purge. See logs.", "alert alert-warning")
+                asyncio.run(send_to_telegram("🍀Nginx-Cache-Clean:",f"Nginx local cache for {name} purged successfully by {current_user.realname}!"))
+                logging.info(f"Nginx cache for {name} - {path} purged successfully by {current_user.realname}!")
+                flash(f"{name} purged successfully!", "alert alert-success")
                 return redirect("/",301)
-        else:
-            asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!"))
-            logging.error(f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!")
-            flash(f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!")
+            else:
+                logging.error(f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!")
+                asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!"))
+                flash(f"Error: Some errors during purging - {name} - {path} - Purge or Zone variable is not set or Path is outside CACHE_FOLDER_BEGIN_WITH security parameter!", "alert alert-danger")
+                return redirect("/",301)
+        except Exception as msg:
+            logging.error(f"Error: Some errors during purging - {name} - {path} - {msg}!")
+            asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: Some errors during- {name} - {path} - {msg}"))
+            flash(f"Purge error: Zone: {name} - {path} - some error while purge. See logs.", "alert alert-warning")
             return redirect("/",301)
     else:
+        asyncio.run(send_to_telegram("💢Nginx-Cache-Clean:",f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!"))
+        logging.error(f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!")
+        flash(f"Error: {name} - {path} - variables are not received properly for {current_user.realname}!")
         return redirect("/",301)
 
 #catch login form. Check if user exists in the list and password is correct. If yes - set cookies and redirect to /
