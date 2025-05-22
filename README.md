@@ -65,7 +65,7 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/opt/Nginx-Cache-Cleaner
-Environment="PATH=/usr/local/bin"
+Environment="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=/usr/bin/gunicorn -c /opt/Nginx-Cache-Cleaner/gunicorn_config.py nginx_cache_clean:application
 StandardOutput=append:/var/log/gunicorn/nginx-cache-clean.log
 StandardError=append:/var/log/gunicorn/nginx-cache-clean-error.log
