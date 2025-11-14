@@ -59,7 +59,7 @@ def generate_default_config():
             print(f"Generate-default-config error: {msg}")
             quit(1)
 
-def set_telegramChat(tgChat):
+def set_telegramChat(tgChat: str) -> None:
     t = Settings(id=1,telegramChat=tgChat.strip())
     db.session.merge(t)
     db.session.commit()
@@ -70,7 +70,7 @@ def set_telegramChat(tgChat):
     except Exception as err:
         pass
 
-def set_telegramToken(tgToken):
+def set_telegramToken(tgToken:str) -> None:
     t = Settings(id=1,telegramToken=tgToken)
     db.session.merge(t)
     db.session.commit()
@@ -81,7 +81,7 @@ def set_telegramToken(tgToken):
     except Exception as err:
         pass
 
-def set_logpath(logpath):
+def set_logpath(logpath: str) -> None:
     t = Settings(id=1,logFile=logpath)
     db.session.merge(t)
     db.session.commit()
@@ -93,7 +93,7 @@ def set_logpath(logpath):
     except Exception as err:
         pass
 
-def register_user(username,password,realname):
+def register_user(username: str,password: str,realname: str) -> None:
     try:
         if User.query.filter_by(username=username).first():
             print(f"User \"{username}\" creation error - already exists!")
@@ -114,7 +114,7 @@ def register_user(username,password,realname):
         logging.error(f"User \"{username}\" - \"{realname}\" creation error: {err}")
         print(f"User \"{username}\" - \"{realname}\" creation error: {err}")
 
-def update_user(username,password):
+def update_user(username: str,password: str) -> None:
     try:
         user = User.query.filter_by(username=username).first()
         if user:
@@ -132,7 +132,7 @@ def update_user(username,password):
         logging.error(f"User \"{user.username}\" set password error: {err}")
         print(f"User \"{user.username}\" set password error: {err}")
 
-def delete_user(username):
+def delete_user(username: str) -> None:
     try:
         user = User.query.filter_by(username=username).first()
         if user:
@@ -149,7 +149,7 @@ def delete_user(username):
         logging.error(f"User \"{user.username}\" delete error: {err}")
         print(f"User \"{user.username}\" delete error: {err}")
 
-def add_cache(name,path):
+def add_cache(name: str,path: str) -> None:
     try:
         new_cache = CachePath(cacheName=name, cachePath=path)
         db.session.add(new_cache)
@@ -161,7 +161,7 @@ def add_cache(name,path):
         logging.error(f"Add cache error: {err}")
         print(f"Add cache error: {err}")
 
-def del_cache(name):
+def del_cache(name: str) -> None:
     try:
         del_cache = CachePath.query.filter_by(cacheName=name).first()
         if del_cache:
@@ -175,7 +175,16 @@ def del_cache(name):
         logging.error(f"Del cache error: {err}")
         print(f"Del cache error: {err}")
 
-def import_cache(file):
+def show_cache() -> None:
+    try:
+        cache_settings = CachePath.query.order_by(CachePath.cacheName).all()
+        for i, s in enumerate(cache_settings, 1):
+            print(f"{s.cacheName} - {s.cachePath}")
+    except Exception as err:
+        logging.error(f"Show cache error: {err}")
+        print(f"Show cache error: {err}")
+
+def import_cache(file: str) -> None:
     data = []
     try:
         with open(file, 'r',encoding='utf8') as file2:
@@ -199,7 +208,7 @@ def import_cache(file):
         logging.error(f"Bulk cache loading error: {err}")
         print(f"Bulk cache loading error: {err}")
 
-async def send_to_telegram(subject,message):
+async def send_to_telegram(subject: str,message: str) -> None:
     if TELEGRAM_CHATID and TELEGRAM_TOKEN:
         headers = {
             'Content-Type': 'application/json',
@@ -333,7 +342,7 @@ def login():
 def index():
     table = ""
     dir = []
-    cache_settings = CachePath.query.all()
+    cache_settings = CachePath.query.order_by(CachePath.cacheName).all()
     for i, s in enumerate(cache_settings, 1):
         #check is something inside the directory or it's empty
         try:
@@ -413,6 +422,11 @@ if __name__ == "__main__":
         elif sys.argv[1] == "cache" and sys.argv[2] == "del":
             if (len(sys.argv) == 4):
                 del_cache(sys.argv[3].strip())
+            else:
+                print("Error! Enter name of cache entry to delete")
+        elif sys.argv[1] == "cache" and sys.argv[2] == "show":
+            if (len(sys.argv) == 4):
+                show_cache()
             else:
                 print("Error! Enter name of cache entry to delete")
     elif len(sys.argv) <= 2:
