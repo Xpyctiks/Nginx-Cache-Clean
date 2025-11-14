@@ -425,10 +425,7 @@ if __name__ == "__main__":
             else:
                 print("Error! Enter name of cache entry to delete")
         elif sys.argv[1] == "cache" and sys.argv[2] == "show":
-            if (len(sys.argv) == 4):
                 show_cache()
-            else:
-                print("Error! Enter name of cache entry to delete")
     elif len(sys.argv) <= 2:
         print(f"""Usage: \n{sys.argv[0]} set chat <chatID>
 \tAdd Telegram ChatID for notifications.
@@ -442,6 +439,8 @@ if __name__ == "__main__":
 \tSet new password for existing user.
 {sys.argv[0]} user del <user>
 \tDelete existing user by its login
+{sys.argv[0]} cache show
+\tShows all cache settings entries from DB.
 {sys.argv[0]} cache add <name> <path>
 \tAdd new cache path
 {sys.argv[0]} cache import <path to file>
