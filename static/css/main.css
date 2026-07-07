@@ -1,0 +1,7 @@
+body {
+  padding-top: 60px;
+}
+#spinner {
+  visibility: hidden;
+  margin-top: 15px;
+}

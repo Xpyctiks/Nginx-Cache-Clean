@@ -1,0 +1,10 @@
+body {
+  padding-top: 70px;
+}
+.settings-label {
+  min-width: 220px;
+  justify-content: flex-end;
+}
+#spinnerLoading {
+  visibility: hidden;
+}
