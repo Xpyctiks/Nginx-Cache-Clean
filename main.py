@@ -6,8 +6,8 @@ from flask_login import LoginManager
 from datetime import timedelta
 
 VERSION = "2.0.0"
-CONFIG_DIR = "/etc/nginx_cache_clean/"
-DB_FILE = os.path.join(CONFIG_DIR, "nginx_cache_clean.db")
+CONFIG_DIR = "/etc/nginx-cache-clean/"
+DB_FILE = os.path.join(CONFIG_DIR, "nginx-cache-clean.db")
 application = Flask(__name__)
 application.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_FILE
 application.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
